@@ -1,0 +1,128 @@
+<div class="auth-container">
+  <mat-card class="auth-card">
+    <mat-card-header>
+      <mat-card-title>Crear Cuenta</mat-card-title>
+      <mat-card-subtitle>Completa el formulario para registrarte</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
+
+        <!-- Name field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nombre completo</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="name"
+            placeholder="Tu nombre"
+            autocomplete="name"
+          />
+          <mat-icon matSuffix>person</mat-icon>
+          @if (name.touched && name.hasError('required')) {
+            <mat-error>El nombre es requerido</mat-error>
+          } @else if (name.touched && name.hasError('minlength')) {
+            <mat-error>El nombre debe tener al menos 2 caracteres</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Email field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Correo electrónico</mat-label>
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            placeholder="ejemplo@correo.com"
+            autocomplete="email"
+          />
+          <mat-icon matSuffix>email</mat-icon>
+          @if (email.touched && email.hasError('required')) {
+            <mat-error>El correo electrónico es requerido</mat-error>
+          } @else if (email.touched && email.hasError('email')) {
+            <mat-error>Ingresa un formato de correo válido</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Password field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Contraseña</mat-label>
+          <input
+            matInput
+            [type]="hidePassword ? 'password' : 'text'"
+            formControlName="password"
+            placeholder="Mínimo 8 caracteres"
+            autocomplete="new-password"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="hidePassword ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+          >
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (password.touched && password.hasError('required')) {
+            <mat-error>La contraseña es requerida</mat-error>
+          } @else if (password.touched && password.hasError('minlength')) {
+            <mat-error>La contraseña debe tener al menos 8 caracteres</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Confirm Password field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Confirmar contraseña</mat-label>
+          <input
+            matInput
+            [type]="hideConfirmPassword ? 'password' : 'text'"
+            formControlName="confirmPassword"
+            placeholder="Repite tu contraseña"
+            autocomplete="new-password"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="toggleConfirmPasswordVisibility()"
+            [attr.aria-label]="hideConfirmPassword ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+          >
+            <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (confirmPassword.touched && confirmPassword.hasError('required')) {
+            <mat-error>Debes confirmar la contraseña</mat-error>
+          } @else if (passwordMismatch) {
+            <mat-error>Las contraseñas no coinciden</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Error message -->
+        @if (errorMessage) {
+          <p class="error-message">{{ errorMessage }}</p>
+        }
+
+        <!-- Submit button -->
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          class="full-width submit-btn"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            Registrarse
+          }
+        </button>
+
+        <!-- Login link -->
+        <p class="login-link">
+          ¿Ya tienes cuenta?
+          <a routerLink="/login">Inicia sesión aquí</a>
+        </p>
+
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>
