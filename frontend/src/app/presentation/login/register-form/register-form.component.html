@@ -96,6 +96,25 @@
           }
         </mat-form-field>
 
+        <div class="captcha-block" role="group" aria-label="Captcha de seguridad">
+          <p class="captcha-label">Verifica que no eres un robot</p>
+          @if (usingTestRecaptcha) {
+            <p class="captcha-hint">Modo desarrollo: se usa una clave de prueba de reCAPTCHA.</p>
+          }
+          <div #captchaContainer class="captcha-container"></div>
+          @if (captchaBlocked) {
+            <p class="captcha-blocked">
+              Parece que el captcha fue bloqueado por una extension o red. Desactiva el bloqueador para este sitio y vuelve a intentar.
+            </p>
+            <button type="button" mat-stroked-button class="captcha-retry-btn" (click)="onRetryCaptchaLoad()">
+              Reintentar captcha
+            </button>
+          }
+          @if (recaptchaToken.touched && recaptchaToken.hasError('required')) {
+            <p class="captcha-error">Debes completar el reCAPTCHA</p>
+          }
+        </div>
+
         <!-- Error message -->
         @if (errorMessage) {
           <p class="error-message">{{ errorMessage }}</p>
@@ -126,3 +145,15 @@
     </mat-card-content>
   </mat-card>
 </div>
+
+<ng-template #successDialog>
+  <h2 mat-dialog-title>Registro exitoso</h2>
+  <mat-dialog-content>
+    <p>{{ successMessage }}</p>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-flat-button color="primary" mat-dialog-close>
+      Ir a iniciar sesion
+    </button>
+  </mat-dialog-actions>
+</ng-template>

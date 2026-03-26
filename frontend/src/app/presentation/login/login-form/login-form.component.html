@@ -57,6 +57,22 @@
           <p class="error-message">{{ errorMessage }}</p>
         }
 
+        @if (infoMessage) {
+          <p class="info-message">{{ infoMessage }}</p>
+        }
+
+        @if (canResendActivation) {
+          <button
+            mat-stroked-button
+            type="button"
+            class="full-width resend-btn"
+            (click)="onResendActivation()"
+            [disabled]="isLoading"
+          >
+            Reenviar correo de activación
+          </button>
+        }
+
         <!-- Submit button -->
         <button
           mat-raised-button

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, tap, map } from 'rxjs';
 import { AuthRepository } from '../../domain/ports/auth.repository';
 import { UserEntity } from '../../domain/entities/user.entity';
+import { RegisterResultEntity } from '../../domain/entities/register-result.entity';
 import { AuthCredentials, RegisterCredentials } from '../../domain/value-objects/auth-credentials.vo';
 import { HttpClientAdapter } from '../adapters/http/http-client.adapter';
 import { LocalStorageAdapter } from '../adapters/storage/local-storage.adapter';
@@ -15,6 +16,27 @@ interface AuthResponse {
     email: string;
     roles?: string[];
   };
+}
+
+interface RegisterResponse {
+  message: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    roles?: string[];
+  };
+}
+
+interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  captcha_token: string;
+}
+
+interface MessageResponse {
+  message: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -46,22 +68,33 @@ export class AuthRepositoryImpl implements AuthRepository {
       );
   }
 
-  register(credentials: RegisterCredentials): Observable<UserEntity> {
+  register(credentials: RegisterCredentials): Observable<RegisterResultEntity> {
+    const payload: RegisterRequest = {
+      name: credentials.name,
+      email: credentials.email,
+      password: credentials.password,
+      captcha_token: credentials.captchaToken
+    };
+
     return this.httpClient
-      .post<AuthResponse>(`${this.baseUrl}/auth/register`, credentials)
+      .post<RegisterResponse>(`${this.baseUrl}/auth/register`, payload)
       .pipe(
-        tap((response) => {
-          this.storage.setItem(this.tokenKey, response.token);
-          this.storage.setItem(this.userKey, JSON.stringify(response.user));
-        }),
-        map((response): UserEntity => ({
-          id: response.user.id,
-          name: response.user.name,
-          email: response.user.email,
-          token: response.token,
-          roles: response.user.roles
+        map((response): RegisterResultEntity => ({
+          message: response.message,
+          user: {
+            id: response.user.id,
+            name: response.user.name,
+            email: response.user.email,
+            roles: response.user.roles
+          }
         }))
       );
+  }
+
+  resendActivation(email: string): Observable<string> {
+    return this.httpClient
+      .post<MessageResponse>(`${this.baseUrl}/auth/resend-activation`, { email })
+      .pipe(map((response) => response.message));
   }
 
   logout(): Observable<void> {

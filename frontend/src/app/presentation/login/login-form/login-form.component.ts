@@ -32,6 +32,8 @@ export class LoginFormComponent implements OnInit {
   hidePassword = true;
   isLoading = false;
   errorMessage = '';
+  infoMessage = '';
+  canResendActivation = false;
 
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
@@ -63,14 +65,41 @@ export class LoginFormComponent implements OnInit {
     }
     this.isLoading = true;
     this.errorMessage = '';
+    this.infoMessage = '';
+    this.canResendActivation = false;
     const { email, password } = this.loginForm.value;
     this.authFacade.login(email, password).subscribe({
       next: () => this.router.navigate(['/home']),
       error: (err: unknown) => {
         this.errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión';
+        this.canResendActivation = this.errorMessage.toLowerCase().includes('inactiva');
         this.isLoading = false;
       },
       complete: () => { this.isLoading = false; }
+    });
+  }
+
+  onResendActivation(): void {
+    if (this.email.invalid) {
+      this.email.markAsTouched();
+      this.errorMessage = 'Ingresa un correo electrónico válido para reenviar activación.';
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.infoMessage = '';
+
+    this.authFacade.resendActivation(this.email.value).subscribe({
+      next: (message) => {
+        this.infoMessage = message;
+      },
+      error: (err: unknown) => {
+        this.errorMessage = err instanceof Error ? err.message : 'Error al reenviar activación';
+      },
+      complete: () => {
+        this.isLoading = false;
+      }
     });
   }
 }

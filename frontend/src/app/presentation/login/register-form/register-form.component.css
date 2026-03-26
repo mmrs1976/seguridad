@@ -4,7 +4,7 @@
   align-items: center;
   min-height: 100vh;
   padding: 1rem;
-  background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
   box-sizing: border-box;
 }
 
@@ -23,7 +23,7 @@ mat-card-header {
 mat-card-title {
   font-size: 1.75rem !important;
   font-weight: 700 !important;
-  color: #1976d2;
+  color: #0f766e;
 }
 
 mat-card-subtitle {
@@ -36,6 +36,45 @@ mat-card-subtitle {
 
 mat-form-field {
   margin-bottom: 0.75rem;
+}
+
+.captcha-block {
+  margin: 0.25rem 0 1rem;
+}
+
+.captcha-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.captcha-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.captcha-container {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.captcha-error {
+  color: #d32f2f;
+  font-size: 0.75rem;
+  margin: 0.35rem 0 0;
+}
+
+.captcha-blocked {
+  color: #b45309;
+  font-size: 0.8rem;
+  margin: 0.5rem 0;
+}
+
+.captcha-retry-btn {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 
 .submit-btn {
@@ -55,7 +94,7 @@ mat-form-field {
 }
 
 .login-link a {
-  color: #1976d2;
+  color: #0f766e;
   font-weight: 600;
   text-decoration: none;
 }
