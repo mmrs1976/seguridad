@@ -1,0 +1,83 @@
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 1rem;
+  background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+  box-sizing: border-box;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 1.5rem;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+}
+
+mat-card-header {
+  margin-bottom: 1.5rem;
+}
+
+mat-card-title {
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  color: #1976d2;
+}
+
+mat-card-subtitle {
+  margin-top: 0.25rem !important;
+}
+
+.full-width {
+  width: 100%;
+}
+
+mat-form-field {
+  margin-bottom: 0.75rem;
+}
+
+.submit-btn {
+  margin-top: 0.5rem;
+  height: 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.register-link {
+  text-align: center;
+  margin-top: 1.25rem;
+  color: #555;
+}
+
+.register-link a {
+  color: #1976d2;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+.error-message {
+  color: #d32f2f;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 1rem;
+  }
+
+  mat-card-title {
+    font-size: 1.5rem !important;
+  }
+}

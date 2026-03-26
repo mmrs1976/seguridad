@@ -9,11 +9,13 @@ import { TransaccionesComponent } from './presentation/transacciones/transaccion
 import { UsuariosComponent } from './presentation/usuarios/usuarios.component';
 import { HomeComponent } from './presentation/home/home.component';
 import { LoginFormComponent } from './presentation/login/login-form/login-form.component';
+import { RegisterFormComponent } from './presentation/login/register-form/register-form.component';
 
 // canonical router configuration for bootstrapApplication
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginFormComponent },
+  { path: 'register', component: RegisterFormComponent },
   {
     path: 'home',
     component: HomeComponent,
