@@ -2,6 +2,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
 import { UserEntity } from '../../domain/entities/user.entity';
+import { CreateUserPayload, CreateUserResult } from '../../domain/ports/user-management.repository';
+import { CreateUserUseCase } from '../../domain/use-cases/users/create-user.use-case';
 import { DeleteUserUseCase } from '../../domain/use-cases/users/delete-user.use-case';
 import { GetUsersUseCase } from '../../domain/use-cases/users/get-users.use-case';
 import { UpdateUserActiveUseCase } from '../../domain/use-cases/users/update-user-active.use-case';
@@ -12,6 +14,7 @@ import { UserManagementRepositoryImpl } from '../../infrastructure/repositories/
 export class UserManagementFacadeService {
   private readonly userRepository = inject(UserManagementRepositoryImpl);
   private readonly getUsersUseCase = new GetUsersUseCase(this.userRepository);
+  private readonly createUserUseCase = new CreateUserUseCase(this.userRepository);
   private readonly updateUserActiveUseCase = new UpdateUserActiveUseCase(this.userRepository);
   private readonly updateUserRoleUseCase = new UpdateUserRoleUseCase(this.userRepository);
   private readonly deleteUserUseCase = new DeleteUserUseCase(this.userRepository);
@@ -30,6 +33,18 @@ export class UserManagementFacadeService {
     return this.getUsersUseCase.execute().pipe(
       tap((users) => this._users.set(users)),
       catchError((err: unknown) => this.handleError(err, 'Error al cargar usuarios')),
+      finalize(() => this._isLoading.set(false))
+    );
+  }
+
+  createUser(payload: CreateUserPayload): Observable<CreateUserResult> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    return this.createUserUseCase.execute(payload).pipe(
+      tap((result) => {
+        this._users.update((users) => [result.user, ...users]);
+      }),
+      catchError((err: unknown) => this.handleError(err, 'Error al crear usuario')),
       finalize(() => this._isLoading.set(false))
     );
   }

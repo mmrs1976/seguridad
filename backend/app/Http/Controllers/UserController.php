@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\UserActivationMail;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\URL;
 
 class UserController extends Controller
 {
@@ -15,6 +20,63 @@ class UserController extends Controller
             ->get(['id', 'name', 'email', 'email_verified_at', 'active', 'role_id', 'created_at', 'updated_at']);
 
         return response()->json($users->map(fn (User $user) => $this->serializeUser($user)));
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'nullable|string|min:8',
+            'role_id' => 'required|integer|exists:roles,id',
+            'active' => 'sometimes|boolean',
+            'notify_user' => 'sometimes|boolean',
+        ]);
+
+        $active = (bool) ($data['active'] ?? true);
+        $notifyUser = (bool) ($data['notify_user'] ?? false);
+        $generatedPassword = empty($data['password']) ? Str::password(12) : null;
+        $plainPassword = $generatedPassword ?? $data['password'];
+
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($plainPassword),
+            'active' => $active,
+            'email_verified_at' => $active ? now() : null,
+            'role_id' => $data['role_id'],
+        ]);
+
+        if ($notifyUser) {
+            if ($active) {
+                Mail::raw(
+                    "Hola {$user->name}, tu cuenta fue creada por un administrador. "
+                    . "Ya puedes iniciar sesion con tu correo y la contrasena: {$plainPassword}",
+                    function ($message) use ($user) {
+                        $message->to($user->email)->subject('Cuenta creada');
+                    }
+                );
+            } else {
+                $activationUrl = URL::temporarySignedRoute(
+                    'auth.activate',
+                    now()->addHours(24),
+                    [
+                        'id' => $user->id,
+                        'hash' => sha1($user->email),
+                    ]
+                );
+
+                Mail::to($user->email)->send(new UserActivationMail($user->name, $activationUrl));
+            }
+        }
+
+        return response()->json([
+            'message' => $notifyUser
+                ? 'Usuario creado correctamente y notificado por correo.'
+                : 'Usuario creado correctamente.',
+            'user' => $this->serializeUser($user->fresh()->load('role')),
+            'generated_password' => $generatedPassword,
+        ], 201);
     }
 
     public function updateActive(Request $request, User $user)

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { UserEntity } from '../../domain/entities/user.entity';
-import { UserManagementRepository } from '../../domain/ports/user-management.repository';
+import { CreateUserPayload, CreateUserResult, UserManagementRepository } from '../../domain/ports/user-management.repository';
 import { HttpClientAdapter } from '../adapters/http/http-client.adapter';
 import { environment } from '../../../environments/environment';
 
@@ -19,6 +19,7 @@ interface ApiUser {
 interface UserMutationResponse {
   message: string;
   user: ApiUser;
+  generated_password?: string | null;
 }
 
 interface MessageResponse {
@@ -35,6 +36,24 @@ export class UserManagementRepositoryImpl implements UserManagementRepository {
     return this.httpClient
       .get<ApiUser[]>(`${this.baseUrl}/users`)
       .pipe(map((users) => users.map((user) => this.mapUser(user))));
+  }
+
+  createUser(payload: CreateUserPayload): Observable<CreateUserResult> {
+    return this.httpClient
+      .post<UserMutationResponse>(`${this.baseUrl}/users`, {
+        name: payload.name,
+        email: payload.email,
+        password: payload.password || null,
+        role_id: payload.roleId,
+        active: payload.active,
+        notify_user: payload.notifyUser,
+      })
+      .pipe(
+        map((response) => ({
+          user: this.mapUser(response.user),
+          generatedPassword: response.generated_password ?? undefined,
+        }))
+      );
   }
 
   updateUserActive(userId: string, active: boolean): Observable<UserEntity> {

@@ -28,6 +28,7 @@ Route::middleware('auth:api')->get('/navigation', [NavigationController::class, 
 
 Route::middleware(['auth:api', 'admin'])->prefix('users')->group(function () {
     Route::get('/', [UserController::class, 'index']);
+    Route::post('/', [UserController::class, 'store']);
     Route::patch('/{user}/active', [UserController::class, 'updateActive']);
     Route::patch('/{user}/role', [UserController::class, 'updateRole']);
     Route::delete('/{user}', [UserController::class, 'destroy']);

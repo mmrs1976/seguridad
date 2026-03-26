@@ -48,4 +48,35 @@ export class AlertService {
       heightAuto: false
     });
   }
+
+  async successWithCopyPassword(title: string, text: string, password: string): Promise<SweetAlertResult> {
+    const result = await Swal.fire({
+      icon: 'success',
+      title,
+      text,
+      showDenyButton: true,
+      denyButtonText: 'Copiar contraseña',
+      confirmButtonText: 'Aceptar',
+      confirmButtonColor: '#0f766e',
+      denyButtonColor: '#0ea5a4',
+      background: '#ffffff',
+      color: '#1f2937',
+      heightAuto: false
+    });
+
+    if (result.isDenied) {
+      await navigator.clipboard.writeText(password);
+      return Swal.fire({
+        icon: 'success',
+        title: 'Contraseña copiada',
+        text: 'La contraseña temporal se copió al portapapeles.',
+        confirmButtonColor: '#0f766e',
+        background: '#ffffff',
+        color: '#1f2937',
+        heightAuto: false
+      });
+    }
+
+    return result;
+  }
 }
