@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
@@ -174,6 +176,67 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Se envio un nuevo correo de activacion.',
+        ]);
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::query()->where('email', $data['email'])->first();
+
+        if ($user) {
+            $token = Password::broker()->createToken($user);
+            $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:4200'), '/');
+            $resetUrl = $frontendUrl . '/reset-password?token=' . urlencode($token) . '&email=' . urlencode($user->email);
+
+            Mail::raw(
+                "Hola {$user->name}, recibimos una solicitud para restablecer tu contraseña. "
+                . "Usa este enlace: {$resetUrl}. El enlace vence en 60 minutos.",
+                function ($message) use ($user) {
+                    $message->to($user->email)->subject('Recuperar contraseña');
+                }
+            );
+        }
+
+        return response()->json([
+            'message' => 'Si el correo existe en el sistema, se envio un enlace para recuperar la contraseña.',
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email',
+            'token' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $status = Password::broker()->reset(
+            [
+                'email' => $data['email'],
+                'token' => $data['token'],
+                'password' => $data['password'],
+                'password_confirmation' => $data['password_confirmation'] ?? '',
+            ],
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                    'remember_token' => Str::random(60),
+                ])->save();
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            return response()->json([
+                'message' => 'No se pudo restablecer la contraseña. Solicita un nuevo enlace.',
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Contraseña restablecida correctamente. Ya puedes iniciar sesión.',
         ]);
     }
 

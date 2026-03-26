@@ -8,6 +8,8 @@ import { LoginUseCase } from '../../domain/use-cases/auth/login.use-case';
 import { RegisterUseCase } from '../../domain/use-cases/auth/register.use-case';
 import { LogoutUseCase } from '../../domain/use-cases/auth/logout.use-case';
 import { ResendActivationUseCase } from '../../domain/use-cases/auth/resend-activation.use-case';
+import { ForgotPasswordUseCase } from '../../domain/use-cases/auth/forgot-password.use-case';
+import { ResetPasswordUseCase } from '../../domain/use-cases/auth/reset-password.use-case';
 import { UserEntity } from '../../domain/entities/user.entity';
 import { RegisterResultEntity } from '../../domain/entities/register-result.entity';
 
@@ -21,6 +23,8 @@ export class AuthFacadeService {
   private readonly registerUseCase = new RegisterUseCase(this.authRepository);
   private readonly logoutUseCase = new LogoutUseCase(this.authRepository);
   private readonly resendActivationUseCase = new ResendActivationUseCase(this.authRepository);
+  private readonly forgotPasswordUseCase = new ForgotPasswordUseCase(this.authRepository);
+  private readonly resetPasswordUseCase = new ResetPasswordUseCase(this.authRepository);
 
   readonly currentUser = this.authState.currentUser;
   readonly isAuthenticated = this.authState.isAuthenticated;
@@ -82,6 +86,32 @@ export class AuthFacadeService {
     return this.resendActivationUseCase.execute(email).pipe(
       catchError((err: unknown) => {
         const message = this.extractErrorMessage(err, 'Error al reenviar activación');
+        this.authState.setError(message);
+        return throwError(() => new Error(message));
+      }),
+      finalize(() => this.authState.setLoading(false))
+    );
+  }
+
+  forgotPassword(email: string): Observable<string> {
+    this.authState.setLoading(true);
+    this.authState.setError(null);
+    return this.forgotPasswordUseCase.execute(email).pipe(
+      catchError((err: unknown) => {
+        const message = this.extractErrorMessage(err, 'Error al solicitar recuperación');
+        this.authState.setError(message);
+        return throwError(() => new Error(message));
+      }),
+      finalize(() => this.authState.setLoading(false))
+    );
+  }
+
+  resetPassword(email: string, token: string, password: string, passwordConfirmation: string): Observable<string> {
+    this.authState.setLoading(true);
+    this.authState.setError(null);
+    return this.resetPasswordUseCase.execute(email, token, password, passwordConfirmation).pipe(
+      catchError((err: unknown) => {
+        const message = this.extractErrorMessage(err, 'Error al restablecer contraseña');
         this.authState.setError(message);
         return throwError(() => new Error(message));
       }),

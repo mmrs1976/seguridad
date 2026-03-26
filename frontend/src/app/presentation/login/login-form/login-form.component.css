@@ -55,6 +55,22 @@ mat-form-field {
   font-weight: 600;
 }
 
+.forgot-link {
+  margin: -0.2rem 0 0.6rem;
+  text-align: right;
+}
+
+.forgot-link a {
+  color: #0f766e;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.88rem;
+}
+
+.forgot-link a:hover {
+  text-decoration: underline;
+}
+
 .register-link {
   text-align: center;
   margin-top: 1.25rem;

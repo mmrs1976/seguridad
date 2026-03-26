@@ -113,6 +113,23 @@ export class AuthRepositoryImpl implements AuthRepository {
       .pipe(map((response) => response.message));
   }
 
+  forgotPassword(email: string): Observable<string> {
+    return this.httpClient
+      .post<MessageResponse>(`${this.baseUrl}/auth/forgot-password`, { email })
+      .pipe(map((response) => response.message));
+  }
+
+  resetPassword(email: string, token: string, password: string, passwordConfirmation: string): Observable<string> {
+    return this.httpClient
+      .post<MessageResponse>(`${this.baseUrl}/auth/reset-password`, {
+        email,
+        token,
+        password,
+        password_confirmation: passwordConfirmation,
+      })
+      .pipe(map((response) => response.message));
+  }
+
   logout(): Observable<void> {
     return new Observable<void>((observer) => {
       this.storage.removeItem(this.tokenKey);

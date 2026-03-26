@@ -11,14 +11,18 @@ import { OrigenesComponent } from './presentation/origenes/origenes.component';
 import { TransaccionesComponent } from './presentation/transacciones/transacciones.component';
 import { UsuariosComponent } from './presentation/usuarios/usuarios.component';
 import { HomeComponent } from './presentation/home/home.component';
+import { ForgotPasswordComponent } from './presentation/login/forgot-password/forgot-password.component';
 import { LoginFormComponent } from './presentation/login/login-form/login-form.component';
 import { RegisterFormComponent } from './presentation/login/register-form/register-form.component';
+import { ResetPasswordComponent } from './presentation/login/reset-password/reset-password.component';
 
 // canonical router configuration for bootstrapApplication
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginFormComponent },
   { path: 'register', component: RegisterFormComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
   {
     path: 'home',
     component: HomeComponent,
