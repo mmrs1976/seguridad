@@ -14,7 +14,11 @@ interface AuthResponse {
     id: string;
     name: string;
     email: string;
-    roles?: string[];
+    active?: boolean;
+    email_verified_at?: string | null;
+    role_id?: number | null;
+    role_name?: string | null;
+    role_code?: string | null;
   };
 }
 
@@ -24,7 +28,11 @@ interface RegisterResponse {
     id: string;
     name: string;
     email: string;
-    roles?: string[];
+    active?: boolean;
+    email_verified_at?: string | null;
+    role_id?: number | null;
+    role_name?: string | null;
+    role_code?: string | null;
   };
 }
 
@@ -62,8 +70,12 @@ export class AuthRepositoryImpl implements AuthRepository {
           id: response.user.id,
           name: response.user.name,
           email: response.user.email,
+          active: response.user.active,
+          emailVerifiedAt: response.user.email_verified_at,
+          roleId: response.user.role_id,
+          roleName: response.user.role_name,
+          roleCode: response.user.role_code,
           token: response.token,
-          roles: response.user.roles
         }))
       );
   }
@@ -85,7 +97,11 @@ export class AuthRepositoryImpl implements AuthRepository {
             id: response.user.id,
             name: response.user.name,
             email: response.user.email,
-            roles: response.user.roles
+            active: response.user.active,
+            emailVerifiedAt: response.user.email_verified_at,
+            roleId: response.user.role_id,
+            roleName: response.user.role_name,
+            roleCode: response.user.role_code,
           }
         }))
       );

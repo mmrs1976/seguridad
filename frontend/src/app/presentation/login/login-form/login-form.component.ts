@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthFacadeService } from '../../../core/services/auth-facade.service';
+import { AlertService } from '../../../core/services/alert.service';
 
 @Component({
   selector: 'app-login-form',
@@ -38,6 +39,7 @@ export class LoginFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authFacade = inject(AuthFacadeService);
+  private readonly alertService = inject(AlertService);
 
   ngOnInit(): void {
     this.loginForm = this.fb.group({
@@ -69,7 +71,12 @@ export class LoginFormComponent implements OnInit {
     this.canResendActivation = false;
     const { email, password } = this.loginForm.value;
     this.authFacade.login(email, password).subscribe({
-      next: () => this.router.navigate(['/home']),
+      next: (user) => {
+        const targetRoute = user.roleCode === 'applicant' || user.roleId === 2
+          ? '/home/encuesta'
+          : '/home/dashboard';
+        this.router.navigate([targetRoute]);
+      },
       error: (err: unknown) => {
         this.errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión';
         this.canResendActivation = this.errorMessage.toLowerCase().includes('inactiva');
@@ -93,9 +100,11 @@ export class LoginFormComponent implements OnInit {
     this.authFacade.resendActivation(this.email.value).subscribe({
       next: (message) => {
         this.infoMessage = message;
+        void this.alertService.success('Correo reenviado', message, 'Entendido');
       },
       error: (err: unknown) => {
         this.errorMessage = err instanceof Error ? err.message : 'Error al reenviar activación';
+        void this.alertService.error('No se pudo reenviar', this.errorMessage, 'Entendido');
       },
       complete: () => {
         this.isLoading = false;

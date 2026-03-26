@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\UserActivationMail;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -33,21 +34,26 @@ class AuthController extends Controller
             ], 409);
         }
 
-        $recaptchaSecret = (string) config('services.recaptcha.secret_key', '');
-        if (empty($recaptchaSecret) && app()->environment('local')) {
-            $recaptchaSecret = self::RECAPTCHA_TEST_SECRET;
-        }
+        $isLocalLikeEnv = app()->environment(['local', 'development']);
+        $configuredSecret = (string) config('services.recaptcha.secret_key', '');
 
-        if (empty($recaptchaSecret)) {
-            return response()->json([
-                'message' => 'Captcha no configurado en el servidor.',
-            ], 500);
-        }
+        if (!$isLocalLikeEnv || !empty($configuredSecret)) {
+            $recaptchaSecret = $configuredSecret;
+            if (empty($recaptchaSecret) && $isLocalLikeEnv) {
+                $recaptchaSecret = self::RECAPTCHA_TEST_SECRET;
+            }
 
-        if (!$this->verifyRecaptchaToken($data['captcha_token'], $request->ip(), $recaptchaSecret)) {
-            return response()->json([
-                'message' => 'Captcha inválido. Intenta nuevamente.',
-            ], 422);
+            if (empty($recaptchaSecret)) {
+                return response()->json([
+                    'message' => 'Captcha no configurado en el servidor.',
+                ], 500);
+            }
+
+            if (!$this->verifyRecaptchaToken($data['captcha_token'], $request->ip(), $recaptchaSecret)) {
+                return response()->json([
+                    'message' => 'Captcha inválido. Intenta nuevamente.',
+                ], 422);
+            }
         }
 
         $user = User::create([
@@ -55,6 +61,7 @@ class AuthController extends Controller
             'email'    => $data['email'],
             'password' => Hash::make($data['password']),
             'active'   => false,
+            'role_id'  => Role::query()->where('code', 'applicant')->value('id') ?? 2,
         ]);
 
         $activationUrl = URL::temporarySignedRoute(
@@ -70,7 +77,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Usuario registrado. Revisa tu correo para activar la cuenta.',
-            'user' => $user,
+            'user' => $this->serializeUser($user->load('role')),
         ], 201);
     }
 
@@ -193,7 +200,13 @@ class AuthController extends Controller
 
     public function me()
     {
-        return response()->json(auth('api')->user());
+        $user = auth('api')->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'No autenticado'], 401);
+        }
+
+        return response()->json($this->serializeUser($user->load('role')));
     }
 
     public function refresh(Request $request)
@@ -221,11 +234,27 @@ class AuthController extends Controller
 
     private function respondWithToken($token)
     {
+        $user = auth('api')->user()?->load('role');
+
         return response()->json([
             'token'      => $token,
             'token_type' => 'bearer',
             'expires_in' => JWTAuth::factory()->getTTL() * 60,
-            'user'       => auth('api')->user(),
+            'user'       => $user ? $this->serializeUser($user) : null,
         ]);
+    }
+
+    private function serializeUser(User $user): array
+    {
+        return [
+            'id' => (string) $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'active' => (bool) $user->active,
+            'email_verified_at' => optional($user->email_verified_at)?->toISOString(),
+            'role_id' => $user->role_id,
+            'role_name' => $user->role?->name,
+            'role_code' => $user->role?->code,
+        ];
     }
 }

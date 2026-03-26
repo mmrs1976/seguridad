@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -15,8 +15,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AuthFacadeService } from '../../../core/services/auth-facade.service';
+import { AlertService } from '../../../core/services/alert.service';
 import { environment } from '../../../../environments/environment';
 
 function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -38,8 +38,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule,
-    MatDialogModule
+    MatProgressSpinnerModule
   ],
   templateUrl: './register-form.component.html',
   styleUrl: './register-form.component.css'
@@ -48,7 +47,6 @@ export class RegisterFormComponent implements OnInit, AfterViewInit {
   // Google test site key for local/dev environments only.
   private readonly testRecaptchaSiteKey = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
 
-  @ViewChild('successDialog') successDialog!: TemplateRef<unknown>;
   @ViewChild('captchaContainer') captchaContainer!: ElementRef<HTMLDivElement>;
 
   registerForm!: FormGroup;
@@ -56,7 +54,6 @@ export class RegisterFormComponent implements OnInit, AfterViewInit {
   hideConfirmPassword = true;
   isLoading = false;
   errorMessage = '';
-  successMessage = '';
   captchaBlocked = false;
   recaptchaSiteKey = environment.production
     ? environment.recaptchaSiteKey
@@ -69,7 +66,7 @@ export class RegisterFormComponent implements OnInit, AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authFacade = inject(AuthFacadeService);
-  private readonly dialog = inject(MatDialog);
+  private readonly alertService = inject(AlertService);
 
   ngOnInit(): void {
     this.registerForm = this.fb.group(
@@ -191,17 +188,15 @@ export class RegisterFormComponent implements OnInit, AfterViewInit {
     const { name, email, password, recaptchaToken } = this.registerForm.value;
     this.authFacade.register(name, email, password, recaptchaToken).subscribe({
       next: (result) => {
-        this.successMessage = result.message || 'Usuario registrado exitosamente.';
-        const dialogRef = this.dialog.open(this.successDialog, {
-          width: '420px',
-          disableClose: false
-        });
-        dialogRef.afterClosed().subscribe(() => {
-          this.router.navigate(['/login']);
-        });
+        void this.alertService
+          .success('Registro exitoso', result.message || 'Usuario registrado exitosamente.', 'Ir a iniciar sesión')
+          .then(() => {
+            this.router.navigate(['/login']);
+          });
       },
       error: (err: unknown) => {
         this.errorMessage = err instanceof Error ? err.message : 'Error al registrarse';
+        void this.alertService.error('No se pudo registrar', this.errorMessage, 'Revisar');
         this.resetRecaptchaWidget();
         this.isLoading = false;
       },

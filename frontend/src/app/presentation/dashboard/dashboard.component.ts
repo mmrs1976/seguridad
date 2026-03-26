@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthFacadeService } from '../../core/services/auth-facade.service';
+import { AlertService } from '../../core/services/alert.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,9 +17,16 @@ import { AuthFacadeService } from '../../core/services/auth-facade.service';
 })
 export class DashboardComponent {
   private readonly authFacade = inject(AuthFacadeService);
+  private readonly alertService = inject(AlertService);
   readonly currentUser = this.authFacade.currentUser;
 
   logout(): void {
-    this.authFacade.logout();
+    void this.alertService
+      .confirm('Cerrar sesión', '¿Deseas cerrar tu sesión actual?', 'Sí, cerrar sesión', 'Cancelar')
+      .then((result) => {
+        if (result.isConfirmed) {
+          this.authFacade.logout();
+        }
+      });
   }
 }

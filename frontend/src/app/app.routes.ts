@@ -2,8 +2,11 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { DashboardComponent } from './presentation/dashboard/dashboard.component';
 import { AlertasComponent } from './presentation/alertas/alertas.component';
+import { EncuestaComponent } from './presentation/encuesta/encuesta.component';
 import { NormativasComponent } from './presentation/normativas/normativas.component';
+import { OpcionesComponent } from './presentation/opciones/opciones.component';
 import { ReglasComponent } from './presentation/reglas/reglas.component';
+import { RolesComponent } from './presentation/roles/roles.component';
 import { OrigenesComponent } from './presentation/origenes/origenes.component';
 import { TransaccionesComponent } from './presentation/transacciones/transacciones.component';
 import { UsuariosComponent } from './presentation/usuarios/usuarios.component';
@@ -21,14 +24,16 @@ export const routes: Routes = [
     component: HomeComponent,
     canActivate: [AuthGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
+      { path: 'encuesta', component: EncuestaComponent },
       { path: 'alertas', component: AlertasComponent },
       { path: 'normativas', component: NormativasComponent },
       { path: 'reglas', component: ReglasComponent },
       { path: 'transacciones', component: TransaccionesComponent },
       { path: 'origenes', component: OrigenesComponent },
-      { path: 'usuarios', component: UsuariosComponent }
+      { path: 'usuarios', component: UsuariosComponent },
+      { path: 'roles', component: RolesComponent },
+      { path: 'opciones', component: OpcionesComponent }
     ]
   },
   { path: '**', redirectTo: 'login' }

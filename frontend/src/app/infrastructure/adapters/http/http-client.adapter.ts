@@ -14,6 +14,10 @@ export class HttpClientAdapter {
     return this.http.post<T>(url, body, { headers: new HttpHeaders(headers) });
   }
 
+  patch<T>(url: string, body: unknown, headers?: Record<string, string>): Observable<T> {
+    return this.http.patch<T>(url, body, { headers: new HttpHeaders(headers) });
+  }
+
   put<T>(url: string, body: unknown, headers?: Record<string, string>): Observable<T> {
     return this.http.put<T>(url, body, { headers: new HttpHeaders(headers) });
   }
