@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { AuthFacadeService } from '../../../core/services/auth-facade.service';
 
 @Component({
   selector: 'app-login-form',
@@ -32,7 +33,9 @@ export class LoginFormComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
 
-  constructor(private fb: FormBuilder, private router: Router) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly authFacade = inject(AuthFacadeService);
 
   ngOnInit(): void {
     this.loginForm = this.fb.group({
@@ -60,8 +63,14 @@ export class LoginFormComponent implements OnInit {
     }
     this.isLoading = true;
     this.errorMessage = '';
-    // TODO: integrate with auth service
-    console.log('Login:', this.loginForm.value);
-    this.isLoading = false;
+    const { email, password } = this.loginForm.value;
+    this.authFacade.login(email, password).subscribe({
+      next: () => this.router.navigate(['/home']),
+      error: (err: unknown) => {
+        this.errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión';
+        this.isLoading = false;
+      },
+      complete: () => { this.isLoading = false; }
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -15,6 +15,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { AuthFacadeService } from '../../../core/services/auth-facade.service';
 
 function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password');
@@ -47,7 +48,9 @@ export class RegisterFormComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
 
-  constructor(private fb: FormBuilder, private router: Router) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly authFacade = inject(AuthFacadeService);
 
   ngOnInit(): void {
     this.registerForm = this.fb.group(
@@ -99,8 +102,14 @@ export class RegisterFormComponent implements OnInit {
     }
     this.isLoading = true;
     this.errorMessage = '';
-    // TODO: integrate with auth service
-    console.log('Register:', this.registerForm.value);
-    this.isLoading = false;
+    const { name, email, password } = this.registerForm.value;
+    this.authFacade.register(name, email, password).subscribe({
+      next: () => this.router.navigate(['/home']),
+      error: (err: unknown) => {
+        this.errorMessage = err instanceof Error ? err.message : 'Error al registrarse';
+        this.isLoading = false;
+      },
+      complete: () => { this.isLoading = false; }
+    });
   }
 }
