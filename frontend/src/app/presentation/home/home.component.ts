@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AlertService } from '../../core/services/alert.service';
 import { AuthFacadeService } from '../../core/services/auth-facade.service';
@@ -10,13 +11,17 @@ import { NavigationFacadeService } from '../../core/services/navigation-facade.s
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, MatButtonModule, MatIconModule],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, MatButtonModule, MatIconModule, MatTooltipModule],
   template: `
     <div class="shell" [class.menu-collapsed]="menuCollapsed">
       <aside class="sidebar">
         <div class="sidebar-top">
           @if (!menuCollapsed) {
             <h2>Seguridad</h2>
+          } @else {
+            <div class="brand-logo" aria-label="Seguridad" matTooltip="Seguridad" matTooltipPosition="right">
+              <mat-icon>shield</mat-icon>
+            </div>
           }
           <button mat-icon-button type="button" (click)="toggleMenu()" aria-label="Ocultar o mostrar menú lateral">
             <mat-icon>{{ menuCollapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
@@ -27,7 +32,7 @@ import { NavigationFacadeService } from '../../core/services/navigation-facade.s
           @for (item of navigationFacade.items(); track item.id) {
             @if (item.isGroup) {
               <section class="menu-group">
-                <button type="button" class="group-title" (click)="toggleGroup(item.id)" [attr.aria-expanded]="isGroupExpanded(item.id)">
+                <button type="button" class="group-title" (click)="toggleGroup(item.id)" [attr.aria-expanded]="isGroupExpanded(item.id)" [attr.aria-label]="item.name" [matTooltip]="item.name" [matTooltipDisabled]="!menuCollapsed" matTooltipPosition="right">
                   <mat-icon>{{ item.icon || 'folder' }}</mat-icon>
                   @if (!menuCollapsed) {
                     <span>{{ item.name }}</span>
@@ -46,7 +51,7 @@ import { NavigationFacadeService } from '../../core/services/navigation-facade.s
                 }
               </section>
             } @else {
-              <a [routerLink]="item.route || '/home/dashboard'" routerLinkActive="active-link">
+              <a [routerLink]="item.route || '/home/dashboard'" routerLinkActive="active-link" [attr.aria-label]="item.name" [matTooltip]="item.name" [matTooltipDisabled]="!menuCollapsed" matTooltipPosition="right">
                 <mat-icon>{{ item.icon || 'menu' }}</mat-icon>
                 @if (!menuCollapsed) {
                   <span>{{ item.name }}</span>
@@ -100,6 +105,17 @@ import { NavigationFacadeService } from '../../core/services/navigation-facade.s
     .sidebar h2 {
       margin: 0;
       font-size: 1.35rem;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
     }
 
     .sidebar nav {
