@@ -8,8 +8,10 @@ import { environment } from '../../../environments/environment';
 interface ApiOption {
   id: number;
   name: string;
-  route: string;
+  route: string | null;
   icon: string | null;
+  is_group: boolean;
+  parent_id: number | null;
   sort_order: number;
   active: boolean;
   role_ids: number[];
@@ -26,8 +28,10 @@ interface MessageResponse {
 
 export interface OptionPayload {
   name: string;
-  route: string;
+  route: string | null;
   icon: string;
+  isGroup: boolean;
+  parentId: number | null;
   sortOrder: number;
   active: boolean;
   roleIds: number[];
@@ -95,6 +99,8 @@ export class OptionManagementFacadeService {
       name: payload.name,
       route: payload.route,
       icon: payload.icon,
+      is_group: payload.isGroup,
+      parent_id: payload.parentId,
       sort_order: payload.sortOrder,
       active: payload.active,
       role_ids: payload.roleIds,
@@ -107,6 +113,8 @@ export class OptionManagementFacadeService {
       name: option.name,
       route: option.route,
       icon: option.icon,
+      isGroup: option.is_group,
+      parentId: option.parent_id,
       sortOrder: option.sort_order,
       active: option.active,
       roleIds: option.role_ids ?? [],

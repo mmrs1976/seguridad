@@ -12,13 +12,14 @@ class User extends Authenticatable implements JWTSubject
 {
    use Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'active', 'role_id'];
+    protected $fillable = ['name', 'email', 'password', 'active', 'role_id', 'token_version'];
 
     protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
         'active' => 'boolean',
+        'token_version' => 'integer',
     ];
 
     // Requerido por JWT
@@ -29,7 +30,9 @@ class User extends Authenticatable implements JWTSubject
 
     public function getJWTCustomClaims()
     {
-        return [];
+        return [
+            'token_version' => (int) $this->token_version,
+        ];
     }
 
     public function role(): BelongsTo

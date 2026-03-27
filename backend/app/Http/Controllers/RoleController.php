@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -40,6 +41,18 @@ class RoleController extends Controller
         $role->options()->sync($data['option_ids'] ?? []);
         $role->load('options:id,name,route,icon,sort_order,active');
 
+        AuditLog::query()->create([
+            'user_id' => optional($request->user('api'))->id,
+            'action' => 'role.created',
+            'target_type' => 'role',
+            'target_id' => $role->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'metadata' => [
+                'code' => $role->code,
+            ],
+        ]);
+
         return response()->json([
             'message' => 'Perfil creado correctamente.',
             'role' => $this->serializeRole($role),
@@ -73,6 +86,19 @@ class RoleController extends Controller
         $role->options()->sync($data['option_ids'] ?? []);
         $role->load('options:id,name,route,icon,sort_order,active');
 
+        AuditLog::query()->create([
+            'user_id' => optional($request->user('api'))->id,
+            'action' => 'role.updated',
+            'target_type' => 'role',
+            'target_id' => $role->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'metadata' => [
+                'code' => $role->code,
+                'active' => $role->active,
+            ],
+        ]);
+
         return response()->json([
             'message' => 'Perfil actualizado correctamente.',
             'role' => $this->serializeRole($role),
@@ -81,6 +107,9 @@ class RoleController extends Controller
 
     public function destroy(Role $role)
     {
+        $roleName = $role->name;
+        $roleId = $role->id;
+
         if (in_array($role->code, ['admin', 'applicant'], true)) {
             return response()->json([
                 'message' => 'No puedes eliminar un perfil base del sistema.',
@@ -95,6 +124,18 @@ class RoleController extends Controller
 
         $role->options()->detach();
         $role->delete();
+
+        AuditLog::query()->create([
+            'user_id' => optional(request()->user('api'))->id,
+            'action' => 'role.deleted',
+            'target_type' => 'role',
+            'target_id' => $roleId,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'metadata' => [
+                'name' => $roleName,
+            ],
+        ]);
 
         return response()->json([
             'message' => 'Perfil eliminado correctamente.',

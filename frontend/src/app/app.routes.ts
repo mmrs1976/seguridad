@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
+import { AdminGuard } from './core/guards/admin.guard';
 import { DashboardComponent } from './presentation/dashboard/dashboard.component';
 import { AlertasComponent } from './presentation/alertas/alertas.component';
 import { EncuestaComponent } from './presentation/encuesta/encuesta.component';
@@ -35,9 +36,9 @@ export const routes: Routes = [
       { path: 'reglas', component: ReglasComponent },
       { path: 'transacciones', component: TransaccionesComponent },
       { path: 'origenes', component: OrigenesComponent },
-      { path: 'usuarios', component: UsuariosComponent },
-      { path: 'roles', component: RolesComponent },
-      { path: 'opciones', component: OpcionesComponent }
+      { path: 'usuarios', component: UsuariosComponent, canActivate: [AdminGuard] },
+      { path: 'roles', component: RolesComponent, canActivate: [AdminGuard] },
+      { path: 'opciones', component: OpcionesComponent, canActivate: [AdminGuard] }
     ]
   },
   { path: '**', redirectTo: 'login' }

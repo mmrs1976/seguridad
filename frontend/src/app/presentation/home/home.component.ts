@@ -25,12 +25,34 @@ import { NavigationFacadeService } from '../../core/services/navigation-facade.s
 
         <nav>
           @for (item of navigationFacade.items(); track item.id) {
-            <a [routerLink]="item.route" routerLinkActive="active-link">
-              <mat-icon>{{ item.icon || 'menu' }}</mat-icon>
-              @if (!menuCollapsed) {
-                <span>{{ item.name }}</span>
-              }
-            </a>
+            @if (item.isGroup) {
+              <section class="menu-group">
+                <button type="button" class="group-title" (click)="toggleGroup(item.id)" [attr.aria-expanded]="isGroupExpanded(item.id)">
+                  <mat-icon>{{ item.icon || 'folder' }}</mat-icon>
+                  @if (!menuCollapsed) {
+                    <span>{{ item.name }}</span>
+                    <span class="group-spacer"></span>
+                    <mat-icon class="group-chevron">{{ isGroupExpanded(item.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                  }
+                </button>
+
+                @if (!menuCollapsed && isGroupExpanded(item.id)) {
+                  @for (child of item.children ?? []; track child.id) {
+                    <a [routerLink]="child.route || '/home/dashboard'" routerLinkActive="active-link" class="child-link">
+                      <mat-icon>{{ child.icon || 'menu' }}</mat-icon>
+                      <span>{{ child.name }}</span>
+                    </a>
+                  }
+                }
+              </section>
+            } @else {
+              <a [routerLink]="item.route || '/home/dashboard'" routerLinkActive="active-link">
+                <mat-icon>{{ item.icon || 'menu' }}</mat-icon>
+                @if (!menuCollapsed) {
+                  <span>{{ item.name }}</span>
+                }
+              </a>
+            }
           }
         </nav>
 
@@ -105,6 +127,53 @@ import { NavigationFacadeService } from '../../core/services/navigation-facade.s
       color: #ffffff;
     }
 
+    .menu-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .group-title {
+      color: #94a3b8;
+      background: transparent;
+      border: 0;
+      width: 100%;
+      cursor: pointer;
+      text-align: left;
+      padding: 0.7rem 0.9rem;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-size: 0.75rem;
+    }
+
+    .group-title:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+    }
+
+    .group-spacer {
+      flex: 1;
+    }
+
+    .group-chevron {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .child-link {
+      margin-left: 0.75rem;
+    }
+
+    .shell.menu-collapsed .child-link {
+      margin-left: 0;
+    }
+
     .logout-btn {
       border: 1px solid rgba(255, 255, 255, 0.2);
       background: rgba(239, 68, 68, 0.15);
@@ -163,10 +232,12 @@ export class HomeComponent implements OnInit {
   private readonly router = inject(Router);
 
   menuCollapsed = false;
+  private readonly expandedGroups: Record<number, boolean> = {};
 
   ngOnInit(): void {
     this.navigationFacade.loadNavigation().subscribe({
       next: () => {
+        this.initializeGroupsState();
         this.redirectIfNeeded();
       },
       error: () => {
@@ -177,6 +248,14 @@ export class HomeComponent implements OnInit {
 
   toggleMenu(): void {
     this.menuCollapsed = !this.menuCollapsed;
+  }
+
+  toggleGroup(groupId: number): void {
+    this.expandedGroups[groupId] = !this.isGroupExpanded(groupId);
+  }
+
+  isGroupExpanded(groupId: number): boolean {
+    return this.expandedGroups[groupId] !== false;
   }
 
   logout(): void {
@@ -203,6 +282,15 @@ export class HomeComponent implements OnInit {
     if (this.router.url === '/home' || this.router.url === '/home/') {
       const target = user.roleCode === 'applicant' ? '/home/encuesta' : '/home/dashboard';
       this.router.navigate([target]);
+    }
+  }
+
+  private initializeGroupsState(): void {
+    const items = this.navigationFacade.items();
+    for (const item of items) {
+      if (item.isGroup && this.expandedGroups[item.id] === undefined) {
+        this.expandedGroups[item.id] = true;
+      }
     }
   }
 }

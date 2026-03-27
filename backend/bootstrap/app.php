@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\AdminRoleMiddleware;
+use App\Http\Middleware\ValidateJwtTokenVersion;
 use Tymon\JWTAuth\Http\Middleware\RefreshToken;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'jwt.refresh' => RefreshToken::class,
             'admin' => AdminRoleMiddleware::class,
+            'jwt.version' => ValidateJwtTokenVersion::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

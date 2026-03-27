@@ -9,9 +9,21 @@ interface NavigationResponse {
   items: Array<{
     id: number;
     name: string;
-    route: string;
+    route: string | null;
     icon: string | null;
+    is_group: boolean;
+    parent_id: number | null;
     sort_order: number;
+    children: Array<{
+      id: number;
+      name: string;
+      route: string | null;
+      icon: string | null;
+      is_group: boolean;
+      parent_id: number | null;
+      sort_order: number;
+      children: [];
+    }>;
   }>;
 }
 
@@ -33,14 +45,7 @@ export class NavigationFacadeService {
     this._error.set(null);
 
     return this.http.get<NavigationResponse>(`${this.baseUrl}/navigation`).pipe(
-      map((response) => response.items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        route: item.route,
-        icon: item.icon,
-        sortOrder: item.sort_order,
-        active: true,
-      }))),
+      map((response) => response.items.map((item) => this.mapNavigationItem(item))),
       tap((items) => this._items.set(items)),
       catchError((err: unknown) => {
         const message = this.extractErrorMessage(err, 'No se pudo cargar el menú lateral.');
@@ -49,6 +54,20 @@ export class NavigationFacadeService {
       }),
       finalize(() => this._isLoading.set(false))
     );
+  }
+
+  private mapNavigationItem(item: NavigationResponse['items'][number]): MenuOptionEntity {
+    return {
+      id: item.id,
+      name: item.name,
+      route: item.route,
+      icon: item.icon,
+      isGroup: item.is_group,
+      parentId: item.parent_id,
+      sortOrder: item.sort_order,
+      active: true,
+      children: (item.children ?? []).map((child) => this.mapNavigationItem(child)),
+    };
   }
 
   private extractErrorMessage(err: unknown, fallback: string): string {

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PasswordResetMail;
 use App\Mail\UserActivationMail;
+use App\Models\AuditLog;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -188,17 +190,11 @@ class AuthController extends Controller
         $user = User::query()->where('email', $data['email'])->first();
 
         if ($user) {
-            $token = Password::broker()->createToken($user);
+            $token = Password::createToken($user);
             $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:4200'), '/');
             $resetUrl = $frontendUrl . '/reset-password?token=' . urlencode($token) . '&email=' . urlencode($user->email);
 
-            Mail::raw(
-                "Hola {$user->name}, recibimos una solicitud para restablecer tu contraseña. "
-                . "Usa este enlace: {$resetUrl}. El enlace vence en 60 minutos.",
-                function ($message) use ($user) {
-                    $message->to($user->email)->subject('Recuperar contraseña');
-                }
-            );
+            Mail::to($user->email)->send(new PasswordResetMail($user->name, $resetUrl));
         }
 
         return response()->json([
@@ -225,6 +221,7 @@ class AuthController extends Controller
                 $user->forceFill([
                     'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
+                    'token_version' => ((int) $user->token_version) + 1,
                 ])->save();
             }
         );
@@ -233,6 +230,21 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'No se pudo restablecer la contraseña. Solicita un nuevo enlace.',
             ], 422);
+        }
+
+        $targetUser = User::query()->where('email', $data['email'])->first();
+        if ($targetUser) {
+            AuditLog::query()->create([
+                'user_id' => $targetUser->id,
+                'action' => 'auth.password_reset',
+                'target_type' => 'user',
+                'target_id' => $targetUser->id,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'source' => 'forgot-password-flow',
+                ],
+            ]);
         }
 
         return response()->json([
@@ -265,11 +277,13 @@ class AuthController extends Controller
     {
         $user = auth('api')->user();
 
-        if (!$user) {
+        if (!$user instanceof User) {
             return response()->json(['message' => 'No autenticado'], 401);
         }
 
-        return response()->json($this->serializeUser($user->load('role')));
+        $user->load('role');
+
+        return response()->json($this->serializeUser($user));
     }
 
     public function refresh(Request $request)
@@ -297,7 +311,13 @@ class AuthController extends Controller
 
     private function respondWithToken($token)
     {
-        $user = auth('api')->user()?->load('role');
+        $authenticated = auth('api')->user();
+        $user = null;
+
+        if ($authenticated instanceof User) {
+            $authenticated->load('role');
+            $user = $authenticated;
+        }
 
         return response()->json([
             'token'      => $token,

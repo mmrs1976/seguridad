@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\UserActivationMail;
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -70,6 +71,20 @@ class UserController extends Controller
             }
         }
 
+        AuditLog::query()->create([
+            'user_id' => optional($request->user('api'))->id,
+            'action' => 'user.created',
+            'target_type' => 'user',
+            'target_id' => $user->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'metadata' => [
+                'role_id' => $user->role_id,
+                'active' => $user->active,
+                'notify_user' => $notifyUser,
+            ],
+        ]);
+
         return response()->json([
             'message' => $notifyUser
                 ? 'Usuario creado correctamente y notificado por correo.'
@@ -96,6 +111,18 @@ class UserController extends Controller
             'active' => $data['active'],
         ])->save();
 
+        AuditLog::query()->create([
+            'user_id' => optional($request->user('api'))->id,
+            'action' => 'user.active_updated',
+            'target_type' => 'user',
+            'target_id' => $user->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'metadata' => [
+                'active' => (bool) $data['active'],
+            ],
+        ]);
+
         return response()->json([
             'message' => $data['active'] ? 'Usuario activado correctamente.' : 'Usuario desactivado correctamente.',
             'user' => $this->serializeUser($user->fresh()->load('role')),
@@ -117,6 +144,18 @@ class UserController extends Controller
 
         $user->forceFill(['role_id' => $data['role_id']])->save();
 
+        AuditLog::query()->create([
+            'user_id' => optional($request->user('api'))->id,
+            'action' => 'user.role_updated',
+            'target_type' => 'user',
+            'target_id' => $user->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'metadata' => [
+                'role_id' => (int) $data['role_id'],
+            ],
+        ]);
+
         return response()->json([
             'message' => 'Perfil del usuario actualizado correctamente.',
             'user' => $this->serializeUser($user->fresh()->load('role')),
@@ -125,6 +164,8 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        $targetName = $user->name;
+
         $authenticatedUser = auth('api')->user();
         if ($authenticatedUser && (int) $authenticatedUser->id === (int) $user->id) {
             return response()->json([
@@ -132,7 +173,21 @@ class UserController extends Controller
             ], 422);
         }
 
+        $targetId = $user->id;
+
         $user->delete();
+
+        AuditLog::query()->create([
+            'user_id' => optional(request()->user('api'))->id,
+            'action' => 'user.deleted',
+            'target_type' => 'user',
+            'target_id' => $targetId,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'metadata' => [
+                'name' => $targetName,
+            ],
+        ]);
 
         return response()->json([
             'message' => 'Usuario eliminado correctamente.',

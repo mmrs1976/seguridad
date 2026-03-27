@@ -25,12 +25,12 @@ Route::prefix('auth')->group(function () {
         Route::post('/logout',  [AuthController::class, 'logout']);
         Route::post('/refresh', [AuthController::class, 'refresh']);
         Route::get('/me',       [AuthController::class, 'me']);
-    });
+    })->middleware('jwt.version');
 });
 
-Route::middleware('auth:api')->get('/navigation', [NavigationController::class, 'index']);
+Route::middleware(['auth:api', 'jwt.version'])->get('/navigation', [NavigationController::class, 'index']);
 
-Route::middleware(['auth:api', 'admin'])->prefix('users')->group(function () {
+Route::middleware(['auth:api', 'jwt.version', 'admin'])->prefix('users')->group(function () {
     Route::get('/', [UserController::class, 'index']);
     Route::post('/', [UserController::class, 'store']);
     Route::patch('/{user}/active', [UserController::class, 'updateActive']);
@@ -38,19 +38,19 @@ Route::middleware(['auth:api', 'admin'])->prefix('users')->group(function () {
     Route::delete('/{user}', [UserController::class, 'destroy']);
 });
 
-Route::middleware('auth:api')->prefix('survey')->group(function () {
+Route::middleware(['auth:api', 'jwt.version'])->prefix('survey')->group(function () {
     Route::get('/', [SurveyController::class, 'show']);
     Route::post('/', [SurveyController::class, 'store']);
 });
 
-Route::middleware(['auth:api', 'admin'])->prefix('roles')->group(function () {
+Route::middleware(['auth:api', 'jwt.version', 'admin'])->prefix('roles')->group(function () {
     Route::get('/', [RoleController::class, 'index']);
     Route::post('/', [RoleController::class, 'store']);
     Route::put('/{role}', [RoleController::class, 'update']);
     Route::delete('/{role}', [RoleController::class, 'destroy']);
 });
 
-Route::middleware(['auth:api', 'admin'])->prefix('options')->group(function () {
+Route::middleware(['auth:api', 'jwt.version', 'admin'])->prefix('options')->group(function () {
     Route::get('/', [OptionController::class, 'index']);
     Route::post('/', [OptionController::class, 'store']);
     Route::put('/{option}', [OptionController::class, 'update']);
